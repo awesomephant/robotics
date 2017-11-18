@@ -22,8 +22,8 @@ var bezierToSegments = function (bezier) {
 }
 
 var parseShapes = function (data, callback) {
-    var instructions = [];
-    for (let i = 1; i < data.childs.length; i++) { // start at 1 to skip title element
+    var instructions =  [];
+    for (let i = 0; i < data.childs.length; i++) { // start at 1 to skip title element
         let el = data.childs[i];
         if (el.name === 'line') {
             instructions.push([el.attrs.x1 * 1, el.attrs.y1 * 1]);
@@ -34,9 +34,11 @@ var parseShapes = function (data, callback) {
         else if (el.name === 'polygon') {
             let points = el.attrs.points.split(' ');
             let coordinates = []
-            for (let j = 0; j < points.length; j += 2) { // pair points
-                coordinates.push([points[j] * 1, points[j + 1] * 1])
+            for (let a = 0; a < points.length - 2; a += 2) { // pair points
+               let c = [parseFloat(points[a]), parseFloat(points[a + 1])]
+               coordinates.push(c)
             }
+            console.log(coordinates)
             instructions.push([coordinates[0][0], coordinates[0][1]]);
             instructions.push('d');
             for (let j = 1; j < coordinates.length; j++) {
@@ -47,7 +49,7 @@ var parseShapes = function (data, callback) {
 
         else if (el.name === 'path') {
             let d = svgPath.makeAbsolute(svgPath.parseSVG(el.attrs.d))
-            //  console.log(d);
+              console.log(d);
             //       instructions.push([d[0].x, d[0].y]);
             for (let i = 1; i < d.length; i++) {
                 let point = d[i];
@@ -72,6 +74,7 @@ fs.readFile('test.svg', 'utf-8', function (err, data) {
     svgson(data, {
         svgo: false,
     }, function (result) {
+        console.log(result)
         parseShapes(result, function (instructions) {
             fs.writeFileSync('instructions.json', JSON.stringify(instructions), 'utf-8')
         })

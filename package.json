@@ -5,6 +5,9 @@
     "version": "1.0.0",
     "main": "",
     "dependencies": {
+        "svgson": "*",
+        "svg-path-parser": "*",
+        "jsbezier": "*",
         "johnny-five": "*"
     }
 }
