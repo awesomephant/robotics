@@ -1,6 +1,24 @@
 //MS1 : 6
 //MS2 : 7
 // green black blue red
+var toTimeString = function(s) {
+  var sec_num = parseInt(s, 10); // don't forget the second param
+  var hours = Math.floor(sec_num / 3600);
+  var minutes = Math.floor((sec_num - hours * 3600) / 60);
+  var seconds = sec_num - hours * 3600 - minutes * 60;
+
+  if (hours < 10) {
+    hours = "0" + hours;
+  }
+  if (minutes < 10) {
+    minutes = "0" + minutes;
+  }
+  if (seconds < 10) {
+    seconds = "0" + seconds;
+  }
+  return hours + ":" + minutes + ":" + seconds;
+};
+
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
@@ -36,14 +54,14 @@ var five = require("johnny-five"),
   board = new five.Board();
 var currentInst = 0;
 var instructions = [];
-var _instructions = require('./instructions.json');
+var _instructions = require("./instructions.json");
 
-for (let i = 0; i < _instructions.length; i++){
-  if (_instructions[i].length === 2){ // if its not a point array, remove it
-    instructions.push(_instructions[i])
+for (let i = 0; i < _instructions.length; i++) {
+  if (_instructions[i].length === 2) {
+    // if its not a point array, remove it
+    instructions.push(_instructions[i]);
   }
 }
-console.log(instructions);
 
 var plotter = {
   running: false,
@@ -55,15 +73,28 @@ var plotter = {
   MMPerStep: 0.025,
   stepsPerMM: 1 / this.MMPerStep,
   xyCorrection: 1.0245901,
-  calculateDrawingTime: function(instructions){
-    let time = ''
-    let seconds = 0;
-    return time;
-    for (let i = 0; i < instructions.length; i++){
+  calculateTotalDistance: function(instructions) {
+    let totalDistance = 0;
+    for (let i = 0; i < instructions.length - 1; i++) {
       //we only need to add up the larger delta, since that
       // notes on cosmic typewriter
-      let deltaX
+      // 10.000 steps -> 12s
+      // 1 step = 0.0012s
+      let deltaX = Math.abs(instructions[i][0] - instructions[i + 1][0]);
+      let deltaY = Math.abs(instructions[i][1] - instructions[i + 1][1]);
+      if (deltaX > deltaY) {
+        totalDistance += deltaX;
+      } else {
+        totalDistance += deltaY;
+      }
     }
+    return totalDistance;
+  },
+  calculateDrawingTime: function(instructions) {
+    let seconds = 0;
+    const stepDuration = 0.0012; //at 255 rpm
+    seconds = this.mmToSteps(this.calculateTotalDistance(instructions)) * stepDuration;
+    return toTimeString(seconds);
   },
   mmToSteps: function(n) {
     return n * (1 / this.MMPerStep);
@@ -74,7 +105,7 @@ var plotter = {
     let dy = Math.abs(deltaY);
     let ratio = 1;
     let rpm = { x: this.maxRPM, y: this.maxRPM };
-    if (dx > dy){
+    if (dx > dy) {
       ratio = dy / dx;
       rpm.y = this.maxRPM * ratio;
       rpm.x = this.maxRPM;
@@ -89,7 +120,7 @@ var plotter = {
     } else if (dy === 0) {
       rpm.x = this.maxRPM;
       rpm.y = 0;
-    };
+    }
 
     console.log("RPM X: " + rpm.x + " RPM Y: " + rpm.y + " ratio: " + ratio);
     return rpm;
@@ -225,12 +256,15 @@ board.on("ready", function() {
 
   var run = function() {
     let inst = instructions[currentInst];
-    console.log('Instruction ' + currentInst + '/' + instructions.length)
+    console.log("Instruction " + currentInst + "/" + instructions.length);
     plotter.moveTo(inst[0], inst[1], function() {
       currentInst++;
-      setTimeout(run,60); //wait to reduce vibration
+      setTimeout(run, 60); //wait to reduce vibration
     });
   };
   //run();
-  plotter.moveX(10000,1,plotter.maxRPM,function(){console.log(done)})
 });
+
+console.log("Total drawing distance: " + plotter.calculateTotalDistance(instructions) / 1000 + 'm');
+console.log("Estimated drawing time: " + plotter.calculateDrawingTime(instructions));
+console.log("----------------------------------")
