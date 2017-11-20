@@ -31,13 +31,19 @@ var parseShapes = function (data, callback) {
             instructions.push([el.attrs.x2 * 1, el.attrs.y2 * 1]);
             instructions.push('u');
         }
-        else if (el.name === 'polygon') {
-            let points = el.attrs.points.split(' ');
+        else if (el.name === 'polygon' || el.name === 'polyline') {
+            let points = el.attrs.points.replace(/[\x00-\x1F\x7F-\x9F]/g, "").split(' ');
             let coordinates = []
-            for (let a = 0; a < points.length - 2; a += 2) { // pair points
-               let c = [parseFloat(points[a]), parseFloat(points[a + 1])]
+            let a = 0;
+            while (a < points.length - 1) { // pair points
+                //let p = points[a].split(',');
+                let c = [parseFloat(points[a]), parseFloat(points[a+1])]
                coordinates.push(c)
+               a += 2;
             }
+   //         coordinates.push(coordinates[0]),
+  //          console.log(el.attrs.points)
+            console.log(points)
             console.log(coordinates)
             instructions.push([coordinates[0][0], coordinates[0][1]]);
             instructions.push('d');
@@ -70,7 +76,8 @@ var parseShapes = function (data, callback) {
     callback(instructions);
 }
 
-fs.readFile('test.svg', 'utf-8', function (err, data) {
+fs.readFile('./drawings/square-2.svg', 'utf-8', function (err, data) {
+    data.replace(/(<g>|<\/g>)/g, '')
     svgson(data, {
         svgo: false,
     }, function (result) {
