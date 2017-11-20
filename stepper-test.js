@@ -44,11 +44,6 @@ for (let i = 0; i < _instructions.length; i++){
   }
 }
 console.log(instructions);
-for (let i = 0; i < 1000; i++) {
-  //  instructions.push([getRandomInt(0, 280), getRandomInt(0, 1)]);
-  // instructions.push([getRandomInt(0, 280), getRandomInt(249, 250)]);
-//  instructions.push([getRandomInt(0, 250), getRandomInt(0, 400)]);
-}
 
 var plotter = {
   running: false,
@@ -60,7 +55,16 @@ var plotter = {
   MMPerStep: 0.025,
   stepsPerMM: 1 / this.MMPerStep,
   xyCorrection: 1.0245901,
-
+  calculateDrawingTime: function(instructions){
+    let time = ''
+    let seconds = 0;
+    return time;
+    for (let i = 0; i < instructions.length; i++){
+      //we only need to add up the larger delta, since that
+      // notes on cosmic typewriter
+      let deltaX
+    }
+  },
   mmToSteps: function(n) {
     return n * (1 / this.MMPerStep);
   },
@@ -221,12 +225,12 @@ board.on("ready", function() {
 
   var run = function() {
     let inst = instructions[currentInst];
-    console.log('Instruction' + currentInst + '/' + instructions.length)
+    console.log('Instruction ' + currentInst + '/' + instructions.length)
     plotter.moveTo(inst[0], inst[1], function() {
       currentInst++;
-      run();
+      setTimeout(run,60); //wait to reduce vibration
     });
   };
-
-  run();
+  //run();
+  plotter.moveX(10000,1,plotter.maxRPM,function(){console.log(done)})
 });
