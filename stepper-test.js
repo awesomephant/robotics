@@ -55,6 +55,7 @@ var five = require("johnny-five"),
 var currentInst = 0;
 var instructions = [];
 var _instructions = require("./instructions.json");
+const email = require("./sendEmail.js");
 
 for (let i = 0; i < _instructions.length; i++) {
   if (_instructions[i].length === 2) {
@@ -93,7 +94,8 @@ var plotter = {
   calculateDrawingTime: function(instructions) {
     let seconds = 0;
     const stepDuration = 0.0012; //at 255 rpm
-    seconds = this.mmToSteps(this.calculateTotalDistance(instructions)) * stepDuration;
+    seconds =
+      this.mmToSteps(this.calculateTotalDistance(instructions)) * stepDuration;
     return toTimeString(seconds);
   },
   mmToSteps: function(n) {
@@ -258,13 +260,25 @@ board.on("ready", function() {
     let inst = instructions[currentInst];
     console.log("Instruction " + currentInst + "/" + instructions.length);
     plotter.moveTo(inst[0], inst[1], function() {
-      currentInst++;
-      setTimeout(run, 60); //wait to reduce vibration
+      if (instructions[currentInst + 1]) {
+        currentInst++;
+        setTimeout(run, 60); //wait to reduce vibration
+      } else {
+        plotter.moveTo(0,0);
+        console.log('Done.')
+        email.sendNotification();
+      }
     });
   };
-  //run();
+  run();
 });
 
-console.log("Total drawing distance: " + plotter.calculateTotalDistance(instructions) / 1000 + 'm');
-console.log("Estimated drawing time: " + plotter.calculateDrawingTime(instructions));
-console.log("----------------------------------")
+console.log(
+  "Total drawing distance: " +
+    plotter.calculateTotalDistance(instructions) / 1000 +
+    "m"
+);
+console.log(
+  "Estimated drawing time: " + plotter.calculateDrawingTime(instructions)
+);
+console.log("----------------------------------");

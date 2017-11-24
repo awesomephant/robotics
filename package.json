@@ -5,9 +5,13 @@
     "version": "1.0.0",
     "main": "",
     "dependencies": {
+        "grunt": "*",
+        "grunt-contrib-connect": "*",
         "svgson": "*",
         "svg-path-parser": "*",
+        "svg-path-to-polygons": "*",
         "jsbezier": "*",
+        "nodemailer": "*",
         "johnny-five": "*"
     }
 }
