@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body {
+            background: rgb(5,5,5);
+            padding: 2rem;
+            font-family: monospace;
+            color: white;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+            font-size: 1rem;
+            margin-bottom: .5rem;
+        }
+
+        canvas {
+            border: 1px solid cyan;
+            box-shadow: 7px 7px 0 black, 8px 8px 0 cyan;
+        }
+
+        h2 {
+            font-weight: 100;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Instruction Viewer</h1>
+    <h2>Width:
+        <span id="width"></span>mm, Height:
+        <span id="height"></span>mm</h2>
+        <h2>Leftmost Point: <span id="left"></span>mm</h2>
+    <canvas id="world"></canvas>
+    <script>
+        var c, canvas, instructions;
+
+        Number.prototype.between = function (a, b) {
+            var min = Math.min.apply(Math, [a, b]),
+                max = Math.max.apply(Math, [a, b]);
+            return this > min && this < max;
+        };
+
+        var httpRequest;
+        function makeRequest() {
+            httpRequest = new XMLHttpRequest();
+            httpRequest.onreadystatechange = alertContents;
+            httpRequest.open('GET', 'instructions.json');
+            httpRequest.send();
+        }
+
+        function alertContents() {
+            if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                instructions = JSON.parse(httpRequest.responseText);
+                init();
+            }
+        }
+
+        var mapRange = function (n, range, targetRange) {
+            //If your number n falls between A and B, and you would like x to fall between C and D, you can apply the following linear transform:
+            var x = (n - range[0]) / (range[1] - range[0]) * (targetRange[1] - targetRange[0]) + targetRange[0];
+            return x;
+        }
+
+        var init = function () {
+            canvas = document.querySelector("#world");
+            let heightEl = document.querySelector('#height')
+            let widthEl = document.querySelector('#width')
+            let leftPointEl = document.querySelector('#left')
+            let maxHeight = 0;
+            let leftPoint = 100000;
+            let topPoint = 0;
+            let maxWidth = 0;
+            c = canvas.getContext("2d");
+            c.canvas.width = 0;
+            c.canvas.height = 0;
+            c.beginPath()
+            for (let a = 0; a < instructions.length; a++) {
+                if (instructions[a].length === 2) {
+                    if (instructions[a][0] > maxWidth) {
+                        maxWidth = instructions[a][0];
+                        widthEl.innerHTML = maxWidth
+                        c.canvas.width = maxWidth + 0;
+                    }
+                    if (instructions[a][1] > maxHeight) {
+                        maxHeight = instructions[a][1];
+                        heightEl.innerHTML = maxHeight
+                        c.canvas.height = maxHeight + 0;
+                    }
+                    if (instructions[a][0] < leftPoint) {
+                        leftPoint = instructions[a][0];
+                        leftPointEl.innerHTML = leftPoint
+                    }
+                }
+            }
+            for (let i = 0; i < instructions.length; i++) {
+                if (instructions[i].length === 2) {
+                    if (instructions[i][0] > maxWidth) {
+                        maxWidth = instructions[i][0];
+                        widthEl.innerHTML = maxWidth
+                        c.canvas.width = maxWidth + 10;
+                    }
+                    if (instructions[i][1] > maxHeight) {
+                        maxHeight = instructions[i][1];
+                        heightEl.innerHTML = maxHeight
+                        c.canvas.height = maxHeight + 10;
+                    }
+                    c.lineTo(instructions[i][0], instructions[i][1])
+                }
+            }
+            c.closePath();
+            c.strokeStyle = 'yellow'
+            c.stroke()
+        };
+
+        window.addEventListener('mousemove', function (e) {
+        })
+        window.onload = function (e) {
+            makeRequest();
+        }
+    </script>
+
+</body>
+
+</html>
