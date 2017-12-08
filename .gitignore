@@ -3,3 +3,5 @@ package-lock.json
 *.lock
 instructions.json
 passwords.json
+**/**.ai
+/drawings
