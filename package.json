@@ -8,6 +8,7 @@
         "grunt": "*",
         "grunt-contrib-connect": "*",
         "svgson": "*",
+        "cli-progress": "*",
         "svg-path-parser": "*",
         "svg-path-to-polygons": "*",
         "jsbezier": "*",

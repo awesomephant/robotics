@@ -1,3 +1,4 @@
+var _progress = require('cli-progress');
 //MS1 : 6
 //MS2 : 7
 // green black blue red
@@ -27,11 +28,14 @@ var setMicrostep = function(resolution, ms1, ms2) {
   if (resolution === "quarter") {
     ms1.low();
     ms2.high();
+    plotter.MMPerStep *= 1.48;
+    console.log("Set microstep resolution to" + resolution);
   } else if (resolution === "eighth") {
     ms1.high();
     ms2.high();
+    console.log("Set microstep resolution to " + resolution);
   } else {
-    console.log("Invalid microstep resolution:" + resolution);
+    console.log("Invalid microstep resolution: " + resolution);
     return null;
   }
 };
@@ -51,8 +55,8 @@ var isPositive = function(n) {
   }
 };
 var five = require("johnny-five"),
-  board = new five.Board();
-var currentInst = 0;
+board = new five.Board();
+var currentInst = 41094; //2930
 var instructions = [];
 var _instructions = require("./instructions.json");
 const email = require("./sendEmail.js");
@@ -70,10 +74,11 @@ var plotter = {
   position_mm: { x: 0, y: 0 },
   stepperX: null,
   stepperY: null,
-  maxRPM: 255,
+  maxRPM: 240,
   MMPerStep: 0.025,
   stepsPerMM: 1 / this.MMPerStep,
-  xyCorrection: 1.0245901,
+  //xyCorrection: 1.0245901,
+  xyCorrection: 1,
   calculateTotalDistance: function(instructions) {
     let totalDistance = 0;
     for (let i = 0; i < instructions.length - 1; i++) {
@@ -124,7 +129,7 @@ var plotter = {
       rpm.y = 0;
     }
 
-    console.log("RPM X: " + rpm.x + " RPM Y: " + rpm.y + " ratio: " + ratio);
+    //console.log("RPM X: " + rpm.x + " RPM Y: " + rpm.y + " ratio: " + ratio);
     return rpm;
   },
   moveTo: function(x, y, cb) {
@@ -133,12 +138,12 @@ var plotter = {
     let deltaY = y - this.position_mm.y;
     let yDirection = isPositive(deltaY);
     let rpm = this.calculateRPM(deltaX, deltaY);
-    console.log("Position: " + this.position_mm.x + "/" + this.position_mm.y);
-    console.log("moveto:" + x + "/" + y);
-    console.log("delta:" + deltaX + "/" + deltaY);
-    console.log("direction:" + xDirection + "/" + yDirection);
-    console.log("rpm:" + rpm.x + "/" + rpm.y + "\n");
-    var steppers = [this.stepperX, this.stepperY];
+    // console.log("Position: " + this.position_mm.x + "/" + this.position_mm.y);
+    // console.log("moveto:" + x + "/" + y);
+    // console.log("delta:" + deltaX + "/" + deltaY);
+    // console.log("direction:" + xDirection + "/" + yDirection);
+    // console.log("rpm:" + rpm.x + "/" + rpm.y + "\n");
+     var steppers = [this.stepperX, this.stepperY];
     var remainingSteppers = 2;
     for (let i = 0; i < 2; i++) {
       if (i === 0) {
@@ -171,7 +176,7 @@ var plotter = {
     for (let i = 0; i < steppers.length; i++) {
       let direction = isPositive(inst[i]);
       let steps = inst[i] * (1 / this.MMPerStep);
-      console.log(steps);
+      //console.log(steps);
       if (i === 0) {
         this.moveX(steps, direction, 200);
       } else {
@@ -236,9 +241,12 @@ var plotter = {
 };
 
 board.on("ready", function() {
-  var ms1 = new five.Pin(13);
-  var ms2 = new five.Pin(12);
-  //setMicrostep("quarter", ms1, ms2);
+  var ms1_y = new five.Pin(7);
+  var ms2_y = new five.Pin(2);
+  var ms1_x = new five.Pin(6);
+  var ms2_x = new five.Pin(5);
+  setMicrostep("eighth", ms1_y, ms2_y);
+  setMicrostep("eighth", ms1_x, ms2_x);
   plotter.stepperY = new five.Stepper({
     type: five.Stepper.TYPE.DRIVER,
     stepsPerRev: 200, // 1.8 deg 8th stepping
@@ -258,12 +266,14 @@ board.on("ready", function() {
 
   var run = function() {
     let inst = instructions[currentInst];
-    console.log("Instruction " + currentInst + "/" + instructions.length);
+    //console.log("Instruction " + currentInst + "/" + instructions.length);
     plotter.moveTo(inst[0], inst[1], function() {
       if (instructions[currentInst + 1]) {
         currentInst++;
-        setTimeout(run, 60); //wait to reduce vibration
+        bar1.increment();
+        setTimeout(run, 100); //wait to reduce vibration
       } else {
+        bar1.stop();
         plotter.moveTo(0,0);
         console.log('Done.')
         email.sendNotification();
@@ -273,12 +283,7 @@ board.on("ready", function() {
   run();
 });
 
-console.log(
-  "Total drawing distance: " +
-    plotter.calculateTotalDistance(instructions) / 1000 +
-    "m"
-);
-console.log(
-  "Estimated drawing time: " + plotter.calculateDrawingTime(instructions)
-);
-console.log("----------------------------------");
+var bar1 = new _progress.Bar({barsize: 80, format:"{bar} {percentage}% | ETA: {eta}s | {value}/{total}"}, _progress.Presets.shades_classic);
+bar1.start(instructions.length, currentInst);
+//console.log( "Total drawing distance: " +   plotter.calculateTotalDistance(instructions) / 1000 + "m");
+console.log('\n')
