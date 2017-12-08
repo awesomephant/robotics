@@ -20,29 +20,68 @@
             font-size: 1rem;
             margin-bottom: .5rem;
         }
-
+        .wrapper {
+            position: relative;
+        }
+        #width {
+            text-align: center;
+            display: block;
+            position: relative;
+            top: -8px;
+        }
+        #height {
+            display: block;
+            transform: rotate(-90deg);
+            transform-origin: left;
+            left: 20px;
+            bottom: 25px;
+            text-align: center;
+            position: absolute;
+        }
         canvas {
-            border: 1px solid cyan;
-            box-shadow: 7px 7px 0 black, 8px 8px 0 cyan;
+            border: 1px solid lightslategray;
+            box-shadow: 7px 7px 0 black, 8px 8px 0 lightslategray;
+            margin-left: 40px;
+            transform: rotate(180deg);
         }
 
         h2 {
             font-weight: 100;
             margin-bottom: 1rem;
         }
+        svg {
+            width: 100%;
+        }
+        svg rect {
+            stroke: lightslategrey;
+            stroke-width: 1.5px;
+        }
     </style>
 </head>
 
 <body>
     <h1>Instruction Viewer</h1>
-    <h2>Width:
-        <span id="width"></span>mm, Height:
-        <span id="height"></span>mm</h2>
         <h2>Leftmost Point: <span id="left"></span>mm</h2>
-    <canvas id="world"></canvas>
+        <div id='js-wrapper' class="wrapper">
+            <span id="height"></span>
+            <span id="width"></span>
+            <canvas id="world"></canvas>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 401.26 35.05">
+            <title>stepper-mockup</title>
+            <g>
+              <rect x="0.25" y="0.25" width="34.55" height="34.55" style="fill: none;stroke-miterlimit: 10;"/>
+              <rect x="390.26" y="4.34" width="10.75" height="26.37" style="fill: none;stroke-miterlimit: 10;"/>
+              <rect x="390.26" y="10.27" width="10.75" height="14.5" style="fill: none;stroke-miterlimit: 10;"/>
+              <rect x="34.8" y="5.71" width="2.34" height="23.63" style="fill: none;stroke-miterlimit: 10;"/>
+              <rect x="37.15" y="16.28" width="353.11" height="2.5" style="fill: none;stroke-miterlimit: 10;"/>
+            </g>
+          </svg>
+          
+    </div>
     <script>
         var c, canvas, instructions;
-
+        const scale = 3;
+        
         Number.prototype.between = function (a, b) {
             var min = Math.min.apply(Math, [a, b]),
                 max = Math.max.apply(Math, [a, b]);
@@ -75,6 +114,7 @@
             let heightEl = document.querySelector('#height')
             let widthEl = document.querySelector('#width')
             let leftPointEl = document.querySelector('#left')
+            let WrapperEl = document.querySelector('#js-wrapper')
             let maxHeight = 0;
             let leftPoint = 100000;
             let topPoint = 0;
@@ -85,15 +125,20 @@
             c.beginPath()
             for (let a = 0; a < instructions.length; a++) {
                 if (instructions[a].length === 2) {
+                    //Scale image
+                    instructions[a][0] *= scale;
+                    instructions[a][1] *= scale;
                     if (instructions[a][0] > maxWidth) {
                         maxWidth = instructions[a][0];
-                        widthEl.innerHTML = maxWidth
-                        c.canvas.width = maxWidth + 0;
+                        widthEl.innerHTML = maxWidth / scale + 'mm'
+                        c.canvas.width = maxWidth;
+                        WrapperEl.style.width = maxWidth + 70 + 'px'; // +70 so teh illustration looks right
                     }
                     if (instructions[a][1] > maxHeight) {
                         maxHeight = instructions[a][1];
-                        heightEl.innerHTML = maxHeight
+                        heightEl.innerHTML = maxHeight / scale + 'mm'
                         c.canvas.height = maxHeight + 0;
+                        heightEl.style.width = maxHeight + 'px';
                     }
                     if (instructions[a][0] < leftPoint) {
                         leftPoint = instructions[a][0];
@@ -106,18 +151,18 @@
                     if (instructions[i][0] > maxWidth) {
                         maxWidth = instructions[i][0];
                         widthEl.innerHTML = maxWidth
-                        c.canvas.width = maxWidth + 10;
+                        c.canvas.width = maxWidth;
                     }
                     if (instructions[i][1] > maxHeight) {
                         maxHeight = instructions[i][1];
                         heightEl.innerHTML = maxHeight
-                        c.canvas.height = maxHeight + 10;
+                        c.canvas.height = maxHeight;
                     }
                     c.lineTo(instructions[i][0], instructions[i][1])
                 }
             }
             c.closePath();
-            c.strokeStyle = 'yellow'
+            c.strokeStyle = '#fff'
             c.stroke()
         };
 
