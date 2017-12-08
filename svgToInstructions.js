@@ -4,8 +4,28 @@ const svgPath = require("svg-path-parser");
 const jsBezier = require("jsbezier");
 const pathToPolygon = require("svg-path-to-polygons");
 
-const curveDecimals = 2;
-const curveTolerance = 0.1;
+const curveDecimals = 1;
+const curveTolerance = 1;
+const stepInterval = 0.025;
+
+var roundFloat = function(value, toNearest, fixed) {
+  return (Math.ceil(value / toNearest) * toNearest).toFixed(fixed);
+};
+var roundToStep = function(instructions) {
+  let instructionsRounded = [];
+  for (let i = 0; i < instructions.length; i++) {
+    if (instructions[i].length === 2) {
+      let inst = [
+        roundFloat(instructions[i][0], stepInterval, 2) * 1,
+        roundFloat(instructions[i][1], stepInterval, 2) * 1
+      ];
+      instructionsRounded.push(inst);
+    } else {
+      instructionsRounded.push(instructions[i]);
+    }
+  }
+  return instructionsRounded;
+};
 
 var parseShapes = function(data, callback) {
   var instructions = [];
@@ -19,13 +39,14 @@ var parseShapes = function(data, callback) {
       instructions.push("u");
     } else if (el.name === "polygon" || el.name === "polyline") {
       let points = el.attrs.points
-        .replace(/[\x00-\x1F\x7F-\x9F]/g, "")
+        .replace(/[\x00-\x1F\x7F-\x9F]/g, "") //remove weird control characters
+        .replace(/\s+$/, "")
         .split(" ");
       let coordinates = [];
       let a = 0;
       while (a < points.length - 1) {
         // pair points
-        //let p = points[a].split(',');
+        let p1 = points[a].split(",");
         let c = [parseFloat(points[a]), parseFloat(points[a + 1])];
         coordinates.push(c);
         a += 2;
@@ -42,7 +63,6 @@ var parseShapes = function(data, callback) {
         tolerance: curveTolerance,
         decimals: curveDecimals
       });
-      console.log(points[0])
       instructions.push(points[0][0]);
       instructions.push("d");
       for (let i = 1; i < points[0].length; i++) {
@@ -54,8 +74,11 @@ var parseShapes = function(data, callback) {
   callback(instructions);
 };
 
-fs.readFile("./drawings/type-test.svg", "utf-8", function(err, data) {
-  data.replace(/(<g>|<\/g>)/g, "");
+let filepath = "./drawings/" + process.argv[2];
+console.log("Converting" + filepath);
+fs.readFile(filepath, "utf-8", function(err, data) {
+  data = data.replace("<g>", "");
+  data = data.replace("</g>", "");
   svgson(
     data,
     {
@@ -63,7 +86,9 @@ fs.readFile("./drawings/type-test.svg", "utf-8", function(err, data) {
     },
     function(result) {
       parseShapes(result, function(instructions) {
-          //console.log(instructions);
+        instructions = roundToStep(instructions);
+        console.log("Rounding instructions to " + stepInterval + 'mm');
+        console.log(instructions.length + " instructions written.");
         fs.writeFileSync(
           "instructions.json",
           JSON.stringify(instructions),
