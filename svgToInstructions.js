@@ -6,7 +6,7 @@ const pathToPolygon = require("svg-path-to-polygons");
 
 const curveDecimals = 1;
 const curveTolerance = 1;
-const stepInterval = 0.025;
+const stepInterval = 0.1;
 
 var roundFloat = function(value, toNearest, fixed) {
   return (Math.ceil(value / toNearest) * toNearest).toFixed(fixed);
@@ -75,6 +75,7 @@ var parseShapes = function(data, callback) {
 };
 
 let filepath = "./drawings/" + process.argv[2];
+let tool = process.argv[3];
 console.log("Converting" + filepath);
 fs.readFile(filepath, "utf-8", function(err, data) {
   data = data.replace("<g>", "");
@@ -86,8 +87,14 @@ fs.readFile(filepath, "utf-8", function(err, data) {
     },
     function(result) {
       parseShapes(result, function(instructions) {
-        instructions = roundToStep(instructions);
-        console.log("Rounding instructions to " + stepInterval + 'mm');
+        //instructions = roundToStep(instructions);
+        //console.log("Rounding instructions to " + stepInterval + 'mm');
+        if (tool === 'brush'){
+          console.log('Adding brush refilling')
+          for (let i = 0; i < instructions.length; i += 10){
+            instructions[i] = [500, 0]
+          }
+        }
         console.log(instructions.length + " instructions written.");
         fs.writeFileSync(
           "instructions.json",

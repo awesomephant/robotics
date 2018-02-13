@@ -25,11 +25,16 @@ function getRandomArbitrary(min, max) {
 }
 
 var setMicrostep = function(resolution, ms1, ms2) {
-  if (resolution === "quarter") {
+  if (resolution === "half") {
+    ms1.high();
+    ms2.low();
+    plotter.MMPerStep *= 2;
+    console.log("Set microstep resolution to " + resolution);
+  } else if (resolution === "quarter") {
     ms1.low();
     ms2.high();
     plotter.MMPerStep *= 1.48;
-    console.log("Set microstep resolution to" + resolution);
+    console.log("Set microstep resolution to " + resolution);
   } else if (resolution === "eighth") {
     ms1.high();
     ms2.high();
@@ -56,7 +61,8 @@ var isPositive = function(n) {
 };
 var five = require("johnny-five"),
 board = new five.Board();
-var currentInst = 41094; //2930
+var currentInst = 0;
+
 var instructions = [];
 var _instructions = require("./instructions.json");
 const email = require("./sendEmail.js");
@@ -74,11 +80,11 @@ var plotter = {
   position_mm: { x: 0, y: 0 },
   stepperX: null,
   stepperY: null,
-  maxRPM: 240,
+  maxRPM: 200,
   MMPerStep: 0.025,
   stepsPerMM: 1 / this.MMPerStep,
-  //xyCorrection: 1.0245901,
-  xyCorrection: 1,
+  xyCorrection: 1.0245901,
+  //xyCorrection: 1,
   calculateTotalDistance: function(instructions) {
     let totalDistance = 0;
     for (let i = 0; i < instructions.length - 1; i++) {
@@ -104,7 +110,8 @@ var plotter = {
     return toTimeString(seconds);
   },
   mmToSteps: function(n) {
-    return n * (1 / this.MMPerStep);
+    //The Johnny Five Stepper class uses Math.floor(), which I think leads to drift issues. Math.round should sometimes round up, sometimes round down in basically a random pattern - this way the error should be spread across the whole drawing. 
+    return Math.round(n * (1 / this.MMPerStep));
   },
   calculateRPM: function(deltaX, deltaY) {
     // calculate rel pen velocity
@@ -245,8 +252,8 @@ board.on("ready", function() {
   var ms2_y = new five.Pin(2);
   var ms1_x = new five.Pin(6);
   var ms2_x = new five.Pin(5);
-  setMicrostep("eighth", ms1_y, ms2_y);
-  setMicrostep("eighth", ms1_x, ms2_x);
+  setMicrostep("quarter", ms1_y, ms2_y);
+  setMicrostep("quarter", ms1_x, ms2_x);
   plotter.stepperY = new five.Stepper({
     type: five.Stepper.TYPE.DRIVER,
     stepsPerRev: 200, // 1.8 deg 8th stepping
@@ -264,6 +271,8 @@ board.on("ready", function() {
     }
   });
 
+  var instructionTimeout = 10000;
+
   var run = function() {
     let inst = instructions[currentInst];
     //console.log("Instruction " + currentInst + "/" + instructions.length);
@@ -271,7 +280,7 @@ board.on("ready", function() {
       if (instructions[currentInst + 1]) {
         currentInst++;
         bar1.increment();
-        setTimeout(run, 100); //wait to reduce vibration
+        setTimeout(run, 20); //wait to reduce vibration
       } else {
         bar1.stop();
         plotter.moveTo(0,0);
@@ -283,7 +292,7 @@ board.on("ready", function() {
   run();
 });
 
-var bar1 = new _progress.Bar({barsize: 80, format:"{bar} {percentage}% | ETA: {eta}s | {value}/{total}"}, _progress.Presets.shades_classic);
+var bar1 = new _progress.Bar({etaBuffer: 100, barsize: 80, format:"{bar} {percentage}% | ETA: {eta}s | {value}/{total}"}, _progress.Presets.shades_classic);
 bar1.start(instructions.length, currentInst);
 //console.log( "Total drawing distance: " +   plotter.calculateTotalDistance(instructions) / 1000 + "m");
 console.log('\n')

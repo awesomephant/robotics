@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Drift Sim</title>
+</head>
+
+<body>
+    <div id="js-wrapper">
+        <canvas id="world"></canvas>
+    </div>
+    <script>
+        var c, canvas, instructions;
+        const scale = 3;
+        const actualMMPerStep = 0.025 //we assume it's 0.025 mm 
+
+        Number.prototype.between = function (a, b) {
+            var min = Math.min.apply(Math, [a, b]),
+                max = Math.max.apply(Math, [a, b]);
+            return this > min && this < max;
+        };
+
+        var floorTo = function (value, roundTo) {
+            return Math.floor(value / roundTo) * roundTo;
+        }
+
+        var httpRequest;
+        function makeRequest() {
+            httpRequest = new XMLHttpRequest();
+            httpRequest.onreadystatechange = alertContents;
+            httpRequest.open('GET', 'testInstructions.json');
+            httpRequest.send();
+        }
+
+        function alertContents() {
+            if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                instructions = JSON.parse(httpRequest.responseText);
+                init();
+            }
+        }
+
+        var mapRange = function (n, range, targetRange) {
+            //If your number n falls between A and B, and you would like x to fall between C and D, you can apply the following linear transform:
+            var x = (n - range[0]) / (range[1] - range[0]) * (targetRange[1] - targetRange[0]) + targetRange[0];
+            return x;
+        }
+
+        var plotter = {
+        }
+
+        var init = function () {
+            canvas = document.querySelector("#world");
+            let heightEl = document.querySelector('#height')
+            let widthEl = document.querySelector('#width')
+            let leftPointEl = document.querySelector('#left')
+            let WrapperEl = document.querySelector('#js-wrapper')
+            let maxHeight = 0;
+            let leftPoint = 100000;
+            let topPoint = 0;
+            let maxWidth = 0;
+            c = canvas.getContext("2d");
+            c.canvas.width = 0;
+            c.canvas.height = 0;
+            c.beginPath()
+            for (let a = 0; a < instructions.length; a++) {
+                if (instructions[a].length === 2) {
+                    //Scale image
+                    if (instructions[a][0] > maxWidth) {
+                        maxWidth = instructions[a][0];
+                        c.canvas.width = maxWidth;
+                    }
+                    if (instructions[a][1] > maxHeight) {
+                        maxHeight = instructions[a][1];
+                        c.canvas.height = maxHeight + 0;
+                    }
+                }
+            }
+            for (let i = 0; i < instructions.length; i++) {
+                if (instructions[i].length === 2) {
+                    c.lineTo(floorTo(instructions[i][0], actualMMPerStep), floorTo(instructions[i][1], actualMMPerStep))
+                }
+            }
+            c.closePath();
+            c.strokeStyle = '#000'
+            c.stroke()
+        };
+
+        window.addEventListener('mousemove', function (e) {
+        })
+        window.onload = function (e) {
+            makeRequest();
+        }
+    </script>
+</body>
+
+</html>
