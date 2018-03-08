@@ -13,6 +13,7 @@
         "svg-path-to-polygons": "*",
         "jsbezier": "*",
         "nodemailer": "*",
-        "johnny-five": "*"
+        "johnny-five": "*",
+        "command-line-args": "*"
     }
 }

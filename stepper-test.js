@@ -2,7 +2,7 @@ var _progress = require('cli-progress');
 //MS1 : 6
 //MS2 : 7
 // green black blue red
-var toTimeString = function(s) {
+var toTimeString = function (s) {
   var sec_num = parseInt(s, 10); // don't forget the second param
   var hours = Math.floor(sec_num / 3600);
   var minutes = Math.floor((sec_num - hours * 3600) / 60);
@@ -24,7 +24,7 @@ function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-var setMicrostep = function(resolution, ms1, ms2) {
+var setMicrostep = function (resolution, ms1, ms2) {
   if (resolution === "half") {
     ms1.high();
     ms2.low();
@@ -52,7 +52,7 @@ var setMicrostep = function(resolution, ms1, ms2) {
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-var isPositive = function(n) {
+var isPositive = function (n) {
   if (n < 0) {
     return 0;
   } else {
@@ -60,12 +60,11 @@ var isPositive = function(n) {
   }
 };
 var five = require("johnny-five"),
-board = new five.Board();
+  board = new five.Board();
 var currentInst = 0;
 
 var instructions = [];
 var _instructions = require("./instructions.json");
-const email = require("./sendEmail.js");
 
 for (let i = 0; i < _instructions.length; i++) {
   if (_instructions[i].length === 2) {
@@ -85,7 +84,7 @@ var plotter = {
   stepsPerMM: 1 / this.MMPerStep,
   xyCorrection: 1.0245901,
   //xyCorrection: 1,
-  calculateTotalDistance: function(instructions) {
+  calculateTotalDistance: function (instructions) {
     let totalDistance = 0;
     for (let i = 0; i < instructions.length - 1; i++) {
       //we only need to add up the larger delta, since that
@@ -102,18 +101,18 @@ var plotter = {
     }
     return totalDistance;
   },
-  calculateDrawingTime: function(instructions) {
+  calculateDrawingTime: function (instructions) {
     let seconds = 0;
     const stepDuration = 0.0012; //at 255 rpm
     seconds =
       this.mmToSteps(this.calculateTotalDistance(instructions)) * stepDuration;
     return toTimeString(seconds);
   },
-  mmToSteps: function(n) {
+  mmToSteps: function (n) {
     //The Johnny Five Stepper class uses Math.floor(), which I think leads to drift issues. Math.round should sometimes round up, sometimes round down in basically a random pattern - this way the error should be spread across the whole drawing. 
     return Math.round(n * (1 / this.MMPerStep));
   },
-  calculateRPM: function(deltaX, deltaY) {
+  calculateRPM: function (deltaX, deltaY) {
     // calculate rel pen velocity
     let dx = Math.abs(deltaX);
     let dy = Math.abs(deltaY);
@@ -139,7 +138,7 @@ var plotter = {
     //console.log("RPM X: " + rpm.x + " RPM Y: " + rpm.y + " ratio: " + ratio);
     return rpm;
   },
-  moveTo: function(x, y, cb) {
+  moveTo: function (x, y, cb) {
     let deltaX = x - this.position_mm.x;
     let xDirection = isPositive(deltaX);
     let deltaY = y - this.position_mm.y;
@@ -150,12 +149,12 @@ var plotter = {
     // console.log("delta:" + deltaX + "/" + deltaY);
     // console.log("direction:" + xDirection + "/" + yDirection);
     // console.log("rpm:" + rpm.x + "/" + rpm.y + "\n");
-     var steppers = [this.stepperX, this.stepperY];
+    var steppers = [this.stepperX, this.stepperY];
     var remainingSteppers = 2;
     for (let i = 0; i < 2; i++) {
       if (i === 0) {
         //x
-        this.moveX(this.mmToSteps(deltaX), xDirection, rpm.x, function() {
+        this.moveX(this.mmToSteps(deltaX), xDirection, rpm.x, function () {
           remainingSteppers--;
           if (remainingSteppers === 0) {
             plotter.position_mm.x += deltaX;
@@ -165,7 +164,7 @@ var plotter = {
         });
       } else if (i === 1) {
         //y
-        this.moveY(this.mmToSteps(deltaY), yDirection, rpm.y, function() {
+        this.moveY(this.mmToSteps(deltaY), yDirection, rpm.y, function () {
           remainingSteppers--;
           if (remainingSteppers === 0) {
             plotter.position_mm.x += deltaX;
@@ -176,7 +175,7 @@ var plotter = {
       }
     }
   },
-  moveByMM: function(x, y, cb) {
+  moveByMM: function (x, y, cb) {
     let steppers = [this.stepperX, this.stepperY];
     let inst = [x, y];
     let steppersRemaining = 2;
@@ -192,17 +191,17 @@ var plotter = {
     }
     cb();
   },
-  moveX: function(steps, direction, rpm, cb) {
+  moveX: function (steps, direction, rpm, cb) {
     steps = Math.abs(steps);
     this.stepperX
       .direction(direction)
       .rpm(rpm)
-      .step(steps, function() {
+      .step(steps, function () {
         //      plotter.updatePosition(steps, direction, 0);
         cb();
       });
   },
-  moveY: function(steps, direction, rpm, cb) {
+  moveY: function (steps, direction, rpm, cb) {
     //Apply a correction factor (derived from measurement) to ensure both axis move equally
     steps = Math.abs(Math.round(this.xyCorrection * steps));
     //swap direction
@@ -214,12 +213,12 @@ var plotter = {
     this.stepperY
       .direction(direction)
       .rpm(rpm)
-      .step(steps, function() {
+      .step(steps, function () {
         cb();
         //        plotter.updatePosition(steps, direction, 1);
       });
   },
-  updatePosition: function(distance, direction, stepper) {
+  updatePosition: function (distance, direction, stepper) {
     if (stepper === 0) {
       //x stepper
       if (direction === 0) {
@@ -247,7 +246,7 @@ var plotter = {
   }
 };
 
-board.on("ready", function() {
+board.on("ready", function () {
   var ms1_y = new five.Pin(7);
   var ms2_y = new five.Pin(2);
   var ms1_x = new five.Pin(6);
@@ -273,26 +272,39 @@ board.on("ready", function() {
 
   var instructionTimeout = 10000;
 
-  var run = function() {
+  var run = function () {
     let inst = instructions[currentInst];
-    //console.log("Instruction " + currentInst + "/" + instructions.length);
-    plotter.moveTo(inst[0], inst[1], function() {
+    plotter.moveTo(inst[0], inst[1], function () {
       if (instructions[currentInst + 1]) {
         currentInst++;
-        bar1.increment();
+        if (clOptions.verbose) {
+          console.log("Instruction " + currentInst + "/" + instructions.length);
+        } else {
+          bar1.increment();
+        }
         setTimeout(run, 20); //wait to reduce vibration
       } else {
-        bar1.stop();
-        plotter.moveTo(0,0);
+        if (!clOptions.verbose) {
+          bar1.stop();
+        }
+        plotter.moveTo(0, 0);
         console.log('Done.')
-        email.sendNotification();
       }
     });
   };
   run();
 });
 
-var bar1 = new _progress.Bar({etaBuffer: 100, barsize: 80, format:"{bar} {percentage}% | ETA: {eta}s | {value}/{total}"}, _progress.Presets.shades_classic);
-bar1.start(instructions.length, currentInst);
-//console.log( "Total drawing distance: " +   plotter.calculateTotalDistance(instructions) / 1000 + "m");
-console.log('\n')
+const optionDefinitions = [
+  { name: 'verbose', alias: 'v', type: Boolean },
+]
+
+const commandLineArgs = require('command-line-args')
+const clOptions = commandLineArgs(optionDefinitions)
+
+if (!clOptions.verbose) {
+  var bar1 = new _progress.Bar({ etaBuffer: 100, barsize: 80, format: "{bar} {percentage}% | ETA: {eta}s | {value}/{total}" }, _progress.Presets.shades_classic);
+  bar1.start(instructions.length, currentInst);
+  //console.log( "Total drawing distance: " +   plotter.calculateTotalDistance(instructions) / 1000 + "m");
+  console.log('\n')
+}
