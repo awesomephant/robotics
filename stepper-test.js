@@ -278,7 +278,7 @@ board.on("ready", function () {
       if (instructions[currentInst + 1]) {
         currentInst++;
         if (clOptions.verbose) {
-          console.log("Instruction " + currentInst + "/" + instructions.length);
+          console.log(currentInst + "/" + instructions.length + ' X: ' + instructions[currentInst][0] + " Y: " + instructions[currentInst][1]);
         } else {
           bar1.increment();
         }
