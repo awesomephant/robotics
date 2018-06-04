@@ -97,6 +97,11 @@ fs.readFile(filepath, "utf-8", function(err, data) {
         }
         console.log(instructions.length + " instructions written.");
         fs.writeFileSync(
+          "instructions-rounded.json",
+          JSON.stringify(roundToStep(instructions)),
+          "utf-8"
+        );
+        fs.writeFileSync(
           "instructions.json",
           JSON.stringify(instructions),
           "utf-8"
