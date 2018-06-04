@@ -83,6 +83,10 @@ var plotter = {
   MMPerStep: 0.025,
   stepsPerMM: 1 / this.MMPerStep,
   xyCorrection: 1.0245901,
+  driftError: {
+    x: 0,
+    y: 0
+  }
   //xyCorrection: 1,
   calculateTotalDistance: function (instructions) {
     let totalDistance = 0;
@@ -108,9 +112,27 @@ var plotter = {
       this.mmToSteps(this.calculateTotalDistance(instructions)) * stepDuration;
     return toTimeString(seconds);
   },
-  mmToSteps: function (n) {
-    //The Johnny Five Stepper class uses Math.floor(), which I think leads to drift issues. Math.round should sometimes round up, sometimes round down in basically a random pattern - this way the error should be spread across the whole drawing. 
-    return Math.round(n * (1 / this.MMPerStep));
+  mmToSteps: function (n, axis) {
+    //The Johnny Five Stepper class uses Math.floor(), which I think leads to drift issues. Math.round should sometimes round up, sometimes round down in basically a random pattern - this way the error should be spread across the whole drawing.
+
+    // June 4, 2018. So the way to actually correct for this is I think this.
+    // For each operation, calculate the error in steps - if we round 10.6 to 11, that's +0.4 error. 
+    // When the error is greater 1 or smaller -1, correct it in the next operation
+    // This needs to happen seperately for X/Y
+    // This should reduce the error to +- 0.5 steps.
+    let error = Math.round(n * (1 / this.MMPerStep)) - (n * (1 / this.MMPerStep))
+    let correction = 0;
+    this.driftError[axis] += error;
+    if (this.driftError[axis] > 1){
+      correction = -1;
+      this.driftError[axis] -= 1;
+      console.log('Correcting axis ' + axis + 'for' + correction + 'step.')
+    } else if (this.driftError[axis] < -1){
+      correction = 1;
+      this.driftError[axis] += 1;
+      console.log('Correcting axis ' + axis + 'for' + correction + 'step.')
+    }
+    return Math.round(n * (1 / this.MMPerStep)) + correction;
   },
   calculateRPM: function (deltaX, deltaY) {
     // calculate rel pen velocity
@@ -154,7 +176,7 @@ var plotter = {
     for (let i = 0; i < 2; i++) {
       if (i === 0) {
         //x
-        this.moveX(this.mmToSteps(deltaX), xDirection, rpm.x, function () {
+        this.moveX(this.mmToSteps(deltaX, 'x'), xDirection, rpm.x, function () {
           remainingSteppers--;
           if (remainingSteppers === 0) {
             plotter.position_mm.x += deltaX;
@@ -164,7 +186,7 @@ var plotter = {
         });
       } else if (i === 1) {
         //y
-        this.moveY(this.mmToSteps(deltaY), yDirection, rpm.y, function () {
+        this.moveY(this.mmToSteps(deltaY, 'y'), yDirection, rpm.y, function () {
           remainingSteppers--;
           if (remainingSteppers === 0) {
             plotter.position_mm.x += deltaX;
