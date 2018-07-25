@@ -60,7 +60,7 @@ var isPositive = function (n) {
   }
 };
 var five = require("johnny-five"),
-  board = new five.Board();
+  board = new five.Board({ port: "COM5" });
 var currentInst = 0;
 
 var instructions = [];
@@ -79,14 +79,14 @@ var plotter = {
   position_mm: { x: 0, y: 0 },
   stepperX: null,
   stepperY: null,
-  maxRPM: 200,
+  maxRPM: 190,
   MMPerStep: 0.025,
   stepsPerMM: 1 / this.MMPerStep,
   xyCorrection: 1.0245901,
   driftError: {
     x: 0,
     y: 0
-  }
+  },
   //xyCorrection: 1,
   calculateTotalDistance: function (instructions) {
     let totalDistance = 0;
@@ -126,11 +126,11 @@ var plotter = {
     if (this.driftError[axis] > 1){
       correction = -1;
       this.driftError[axis] -= 1;
-      console.log('Correcting axis ' + axis + 'for' + correction + 'step.')
+      console.log('Correcting axis ' + axis + ' for ' + correction + ' step.')
     } else if (this.driftError[axis] < -1){
       correction = 1;
       this.driftError[axis] += 1;
-      console.log('Correcting axis ' + axis + 'for' + correction + 'step.')
+      console.log('Correcting axis ' + axis + ' for ' + correction + ' step.')
     }
     return Math.round(n * (1 / this.MMPerStep)) + correction;
   },
@@ -273,8 +273,8 @@ board.on("ready", function () {
   var ms2_y = new five.Pin(2);
   var ms1_x = new five.Pin(6);
   var ms2_x = new five.Pin(5);
-  setMicrostep("quarter", ms1_y, ms2_y);
-  setMicrostep("quarter", ms1_x, ms2_x);
+  setMicrostep("eighth", ms1_y, ms2_y);
+  setMicrostep("eighth", ms1_x, ms2_x);
   plotter.stepperY = new five.Stepper({
     type: five.Stepper.TYPE.DRIVER,
     stepsPerRev: 200, // 1.8 deg 8th stepping
@@ -311,7 +311,7 @@ board.on("ready", function () {
         } else {
           bar1.increment();
         }
-        setTimeout(run, 20); //wait to reduce vibration
+        setTimeout(run, 2); //wait to reduce vibration
       } else {
         if (!clOptions.verbose) {
           bar1.stop();
