@@ -28,12 +28,12 @@ var setMicrostep = function (resolution, ms1, ms2) {
   if (resolution === "half") {
     ms1.high();
     ms2.low();
-    plotter.MMPerStep *= 2;
+    plotter.MMPerStep *= Math.sqrt(4);
     console.log("Set microstep resolution to " + resolution);
   } else if (resolution === "quarter") {
     ms1.low();
     ms2.high();
-    plotter.MMPerStep *= 1.48;
+    plotter.MMPerStep *= Math.sqrt(2); // Because: MMPerStep_new = MMPerStep * n ^ 2
     console.log("Set microstep resolution to " + resolution);
   } else if (resolution === "eighth") {
     ms1.high();
@@ -117,7 +117,7 @@ var plotter = {
 
     // June 4, 2018. So the way to actually correct for this is I think this.
     // For each operation, calculate the error in steps - if we round 10.6 to 11, that's +0.4 error. 
-    // When the error is greater 1 or smaller -1, correct it in the next operation
+    // When the cumulative error is greater 1 or smaller -1, correct it in the next operation
     // This needs to happen seperately for X/Y
     // This should reduce the error to +- 0.5 steps.
     let error = Math.round(n * (1 / this.MMPerStep)) - (n * (1 / this.MMPerStep))
@@ -126,11 +126,11 @@ var plotter = {
     if (this.driftError[axis] > 1){
       correction = -1;
       this.driftError[axis] -= 1;
-      console.log('Correcting axis ' + axis + ' for ' + correction + ' step.')
+      //console.log('Correcting axis ' + axis + ' for ' + correction + ' step.')
     } else if (this.driftError[axis] < -1){
       correction = 1;
       this.driftError[axis] += 1;
-      console.log('Correcting axis ' + axis + ' for ' + correction + ' step.')
+      //console.log(' Correcting axis ' + axis + ' for ' + correction + ' step.')
     }
     return Math.round(n * (1 / this.MMPerStep)) + correction;
   },
@@ -273,8 +273,8 @@ board.on("ready", function () {
   var ms2_y = new five.Pin(2);
   var ms1_x = new five.Pin(6);
   var ms2_x = new five.Pin(5);
-  setMicrostep("eighth", ms1_y, ms2_y);
-  setMicrostep("eighth", ms1_x, ms2_x);
+  setMicrostep("quarter", ms1_y, ms2_y);
+  setMicrostep("quarter", ms1_x, ms2_x);
   plotter.stepperY = new five.Stepper({
     type: five.Stepper.TYPE.DRIVER,
     stepsPerRev: 200, // 1.8 deg 8th stepping
