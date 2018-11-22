@@ -307,12 +307,12 @@ board.on("ready", function () {
       if (instructions[currentInst + 1]) {
         currentInst++;
         if (clOptions.verbose) {
-	let deltaX = 0;
-	let deltaY = 0;
+          let deltaX = 0;
+          let deltaY = 0;
           if (currentInst > 4) {
-		deltaX = instructions[currentInst][0] - instructions[currentInst - 1][0]
-		deltaY = instructions[currentInst][1] - instructions[currentInst - 1][1]
-	}
+            deltaX = instructions[currentInst][0] - instructions[currentInst - 1][0]
+            deltaY = instructions[currentInst][1] - instructions[currentInst - 1][1]
+          }
           console.log("N: " + currentInst + "/" + instructions.length + ' X: ' + instructions[currentInst][0] + " Y: " + instructions[currentInst][1] + ' ΔX: ' + Math.round(deltaX) + ' ΔY: ' + Math.round(deltaY));
         } else {
           bar1.increment();
