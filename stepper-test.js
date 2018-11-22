@@ -298,7 +298,8 @@ board.on("ready", function () {
     }
   });
 
-  var instructionTimeout = 10000;
+  plotter.position_steps = { x: plotter.mmToSteps(instructions[currentInst][0]), y: plotter.mmToSteps(instructions[currentInst][1] };
+  plotter.position_mm = { x: instructions[currentInst][0], y: instructions[currentInst][1] };
 
   var run = function () {
     let inst = instructions[currentInst];
@@ -308,10 +309,9 @@ board.on("ready", function () {
         if (clOptions.verbose) {
 	let deltaX = 0;
 	let deltaY = 0;
-	if (currentInst > 4){
+          if (currentInst > 4) {
 		deltaX = instructions[currentInst][0] - instructions[currentInst - 1][0]
 		deltaY = instructions[currentInst][1] - instructions[currentInst - 1][1]
-
 	}
           console.log("N: " + currentInst + "/" + instructions.length + ' X: ' + instructions[currentInst][0] + " Y: " + instructions[currentInst][1] + ' ΔX: ' + Math.round(deltaX) + ' ΔY: ' + Math.round(deltaY));
         } else {
@@ -322,7 +322,6 @@ board.on("ready", function () {
         if (!clOptions.verbose) {
           bar1.stop();
         }
-        plotter.moveTo(0, 0);
         console.log('Done.')
       }
     });
