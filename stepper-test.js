@@ -114,6 +114,11 @@ var plotter = {
       this.mmToSteps(this.calculateTotalDistance(instructions)) * stepDuration;
     return toTimeString(seconds);
   },
+  /**
+   * Given a number of mm, returns the correct amout of steps depending on microstep resolution and axis.
+   * @param {Number} n 
+   * @param {Number} axis 
+   */
   mmToSteps: function (n, axis) {
     //The Johnny Five Stepper class uses Math.floor(), which I think leads to drift issues. Math.round should sometimes round up, sometimes round down in basically a random pattern - this way the error should be spread across the whole drawing.
 
@@ -125,11 +130,11 @@ var plotter = {
     let error = Math.round(n * (1 / this.MMPerStep)) - (n * (1 / this.MMPerStep))
     let correction = 0;
     this.driftError[axis] += error;
-    if (this.driftError[axis] > 1){
+    if (this.driftError[axis] > 1) {
       correction = -1;
       this.driftError[axis] -= 1;
       //console.log('Correcting axis ' + axis + ' for ' + correction + ' step.')
-    } else if (this.driftError[axis] < -1){
+    } else if (this.driftError[axis] < -1) {
       correction = 1;
       this.driftError[axis] += 1;
       //console.log(' Correcting axis ' + axis + ' for ' + correction + ' step.')
@@ -137,7 +142,7 @@ var plotter = {
     return Math.round(n * (1 / this.MMPerStep)) + correction;
   },
   calculateRPM: function (deltaX, deltaY) {
-    // calculate rel pen velocity
+    // calculate relative pen velocity
     let dx = Math.abs(deltaX);
     let dy = Math.abs(deltaY);
     let ratio = 1;
