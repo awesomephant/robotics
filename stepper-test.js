@@ -28,9 +28,11 @@ var setMicrostep = function (resolution, ms1, ms2) {
   if (resolution === "half") {
     ms1.high();
     ms2.low();
+    plotter.maxRPM = 125;
     plotter.MMPerStep *= Math.sqrt(4);
     console.log("Set microstep resolution to " + resolution);
   } else if (resolution === "quarter") {
+    plotter.maxRPM = 180;
     ms1.low();
     ms2.high();
     plotter.MMPerStep *= Math.sqrt(2); // Because: MMPerStep_new = MMPerStep * n ^ 2
@@ -79,7 +81,7 @@ var plotter = {
   position_mm: { x: 0, y: 0 },
   stepperX: null,
   stepperY: null,
-  maxRPM: 190,
+  maxRPM: 160,
   MMPerStep: 0.025,
   stepsPerMM: 1 / this.MMPerStep,
   xyCorrection: 1.0245901,
