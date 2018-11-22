@@ -84,17 +84,16 @@ var plotter = {
   maxRPM: 160,
   MMPerStep: 0.025,
   stepsPerMM: 1 / this.MMPerStep,
-  xyCorrection: 1.0245901,
+  //xyCorrection: 1.0245901,
   driftError: {
     x: 0,
     y: 0
   },
-  //xyCorrection: 1,
+  xyCorrection: 1,
   calculateTotalDistance: function (instructions) {
     let totalDistance = 0;
     for (let i = 0; i < instructions.length - 1; i++) {
       //we only need to add up the larger delta, since that
-      // notes on cosmic typewriter
       // 10.000 steps -> 12s
       // 1 step = 0.0012s
       let deltaX = Math.abs(instructions[i][0] - instructions[i + 1][0]);
