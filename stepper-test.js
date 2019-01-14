@@ -74,7 +74,6 @@ for (let i = 0; i < _instructions.length; i++) {
     instructions.push(_instructions[i]);
   }
 }
-
 var plotter = {
   running: false,
   position_steps: { x: 0, y: 0 },
@@ -162,8 +161,6 @@ var plotter = {
       rpm.x = this.maxRPM;
       rpm.y = 0;
     }
-
-    //console.log("RPM X: " + rpm.x + " RPM Y: " + rpm.y + " ratio: " + ratio);
     return rpm;
   },
   moveTo: function (x, y, cb) {
@@ -172,11 +169,6 @@ var plotter = {
     let deltaY = y - this.position_mm.y;
     let yDirection = isPositive(deltaY);
     let rpm = this.calculateRPM(deltaX, deltaY);
-    // console.log("Position: " + this.position_mm.x + "/" + this.position_mm.y);
-    // console.log("moveto:" + x + "/" + y);
-    // console.log("delta:" + deltaX + "/" + deltaY);
-    // console.log("direction:" + xDirection + "/" + yDirection);
-    // console.log("rpm:" + rpm.x + "/" + rpm.y + "\n");
     var steppers = [this.stepperX, this.stepperY];
     var remainingSteppers = 2;
     for (let i = 0; i < 2; i++) {
@@ -279,8 +271,8 @@ board.on("ready", function () {
   var ms2_y = new five.Pin(2);
   var ms1_x = new five.Pin(6);
   var ms2_x = new five.Pin(5);
-  setMicrostep("quarter", ms1_y, ms2_y);
-  setMicrostep("quarter", ms1_x, ms2_x);
+  setMicrostep("eighth", ms1_y, ms2_y);
+  setMicrostep("eighth", ms1_x, ms2_x);
   plotter.stepperY = new five.Stepper({
     type: five.Stepper.TYPE.DRIVER,
     stepsPerRev: 200, // 1.8 deg 8th stepping
@@ -298,9 +290,7 @@ board.on("ready", function () {
     }
   });
 
-  plotter.position_steps = { x: plotter.mmToSteps(instructions[currentInst][0]), y: plotter.mmToSteps(instructions[currentInst][1] };
-  plotter.position_mm = { x: instructions[currentInst][0], y: instructions[currentInst][1] };
-
+  
   var run = function () {
     let inst = instructions[currentInst];
     plotter.moveTo(inst[0], inst[1], function () {
@@ -331,14 +321,28 @@ board.on("ready", function () {
 
 const optionDefinitions = [
   { name: 'verbose', alias: 'v', type: Boolean },
+  { name: 'startFromOrigin', alias: 'o', type: Boolean },
+  { name: 'startFromInstruction', alias: 's', type: Number } 
 ]
 
 const commandLineArgs = require('command-line-args')
 const clOptions = commandLineArgs(optionDefinitions)
 
+
+if (!clOptions.startFromOrigin){
+  plotter.position_steps = { x: plotter.mmToSteps(instructions[currentInst][0]), y: plotter.mmToSteps(instructions[currentInst][1]) };
+  plotter.position_mm = { x: instructions[currentInst][0], y: instructions[currentInst][1] };
+  console.log('Starting from origin [' + plotter.position_mm.x + ',' + plotter.position_mm.y + ']')
+} else {
+  console.log('Starting from origin [0,0]')
+}
+if (clOptions.startFromInstruction){
+  currentInst = clOptions.startFromInstruction;
+  console.log('Starting from instruction ' + currentInst)
+}
+
 if (!clOptions.verbose) {
   var bar1 = new _progress.Bar({ etaBuffer: 100, barsize: 80, format: "{bar} {percentage}% | ETA: {eta}s | {value}/{total}" }, _progress.Presets.shades_classic);
   bar1.start(instructions.length, currentInst);
-  //console.log( "Total drawing distance: " +   plotter.calculateTotalDistance(instructions) / 1000 + "m");
   console.log('\n')
 }
